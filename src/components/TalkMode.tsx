@@ -3,23 +3,15 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from './Layout';
 import { cn } from '../lib/utils';
 import { HISTORICAL_FIGURES } from '../constants';
-import { HistoricalFigure, TimelinePeriod } from '../types';
+import { HistoricalFigure, TimelinePeriod, FigureCategory } from '../types';
 import { getHistoricalResponse } from '../services/gemini';
 import { Send, User, Bot, ArrowLeft, Sparkles, Brain, Shield, Heart, Zap } from 'lucide-react';
 
-const PERIODS: TimelinePeriod[] = [
-  'Stone Age', 
-  'Ancient Civilizations', 
-  'Classical Era', 
-  'Medieval Period', 
-  'Early Modern Period', 
-  'Modern History', 
-  'Contemporary'
-];
+const CATEGORIES: FigureCategory[] = ['Leader', 'Scientist', 'Thinker', 'Explorer', 'Artist', 'Warrior'];
 
 export const TalkMode: React.FC = () => {
   const { theme } = useApp();
-  const [selectedPeriod, setSelectedPeriod] = useState<TimelinePeriod | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<FigureCategory | 'All'>('All');
   const [activeFigureId, setActiveFigureId] = useState<string | null>(null);
   const [isSelectionOpen, setIsSelectionOpen] = useState(true);
   const [messages, setMessages] = useState<{ role: 'user' | 'bot'; text: string; senderName: string; avatar: string }[]>([]);
@@ -28,7 +20,10 @@ export const TalkMode: React.FC = () => {
   const [currentStatus, setCurrentStatus] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const figuresInPeriod = HISTORICAL_FIGURES.filter(f => f.period === selectedPeriod);
+  const filteredFigures = selectedCategory === 'All' 
+    ? HISTORICAL_FIGURES 
+    : HISTORICAL_FIGURES.filter(f => f.category === selectedCategory);
+    
   const activeFigure = HISTORICAL_FIGURES.find(f => f.id === activeFigureId);
 
   useEffect(() => {
@@ -83,7 +78,7 @@ export const TalkMode: React.FC = () => {
     }]);
   };
 
-  if (!selectedPeriod) {
+  if (!activeFigureId) {
     return (
       <div className="p-8 max-w-7xl mx-auto pb-32">
         <motion.div
@@ -95,44 +90,116 @@ export const TalkMode: React.FC = () => {
             "text-6xl font-black mb-4 tracking-tighter",
             theme === 'futuristic' ? "text-white" : "text-amber-100 font-serif italic"
           )}>
-            {theme === 'futuristic' ? "Comm-Link: Select Era" : "The Hall of Ancestors"}
+            {theme === 'futuristic' ? "Comm-Link: Character Hub" : "The Hall of Ancestors"}
           </h2>
-          <p className="text-xl opacity-60">Choose a period to connect with its most influential minds.</p>
+          <p className="text-xl opacity-60">Connect with the most influential minds across all of human history.</p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {PERIODS.map((period, i) => {
-            const count = HISTORICAL_FIGURES.filter(f => f.period === period).length;
-            if (count === 0) return null;
-            
-            return (
+        {/* Category Filter */}
+        <div className="flex flex-wrap justify-center gap-3 mb-12">
+          <button
+            onClick={() => setSelectedCategory('All')}
+            className={cn(
+              "px-6 py-3 rounded-full text-sm font-bold transition-all",
+              selectedCategory === 'All'
+                ? (theme === 'futuristic' ? "bg-cyan-500 text-black" : "bg-amber-600 text-white")
+                : (theme === 'futuristic' ? "bg-white/5 text-white hover:bg-white/10" : "bg-amber-900/20 text-amber-200 hover:bg-amber-900/40")
+            )}
+          >
+            All Roles
+          </button>
+          {CATEGORIES.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={cn(
+                "px-6 py-3 rounded-full text-sm font-bold transition-all",
+                selectedCategory === cat
+                  ? (theme === 'futuristic' ? "bg-cyan-500 text-black" : "bg-amber-600 text-white")
+                  : (theme === 'futuristic' ? "bg-white/5 text-white hover:bg-white/10" : "bg-amber-900/20 text-amber-200 hover:bg-amber-900/40")
+              )}
+            >
+              {cat}s
+            </button>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <AnimatePresence mode="popLayout">
+            {filteredFigures.map((figure, i) => (
               <motion.button
-                key={period}
+                key={figure.id}
+                layout
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ delay: i * 0.05 }}
                 whileHover={{ y: -10, scale: 1.02 }}
                 onClick={() => {
-                  setSelectedPeriod(period);
+                  setActiveFigureId(figure.id);
+                  setIsSelectionOpen(false);
+                  setMessages([]);
                 }}
                 className={cn(
-                  "p-10 rounded-[40px] text-center transition-all group relative overflow-hidden h-64 flex flex-col items-center justify-center",
+                  "p-8 rounded-[40px] text-left transition-all group relative overflow-hidden flex flex-col gap-6",
                   theme === 'futuristic' ? "hologram-panel" : "temple-panel"
                 )}
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <h3 className={cn(
-                  "text-3xl font-black mb-2",
-                  theme === 'futuristic' ? "text-white" : "text-amber-100 font-serif"
-                )}>
-                  {period}
-                </h3>
-                <p className="opacity-60 text-[10px] tracking-widest uppercase font-bold">
-                  {count} Characters
+                {/* Theme-specific Overlays */}
+                {theme === 'futuristic' ? (
+                  <div className="absolute inset-0 pointer-events-none">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-cyan-500/20 group-hover:bg-cyan-500/60 transition-colors" />
+                    <div className="absolute top-0 right-0 w-1 h-full bg-cyan-500/10" />
+                    <div className="absolute bottom-0 left-0 w-full h-[1px] bg-cyan-500/5" />
+                    <div className="absolute top-2 left-2 text-[8px] font-mono text-cyan-500/30 uppercase tracking-tighter">Identity Verified</div>
+                  </div>
+                ) : (
+                  <div className="absolute inset-0 pointer-events-none">
+                    <div className="absolute inset-2 border border-amber-900/20 rounded-[32px]" />
+                    <div className="absolute top-4 left-1/2 -translate-x-1/2 text-[10px] text-amber-500/20 rune-glow">ᚹᚺᚻ</div>
+                  </div>
+                )}
+
+                <div className="flex gap-6 items-center relative z-10">
+                  <img 
+                    src={figure.avatar} 
+                    alt={figure.name} 
+                    className={cn(
+                      "w-24 h-24 rounded-2xl object-cover border-2 visual-style transition-all duration-500 group-hover:scale-110",
+                      theme === 'futuristic' ? "border-cyan-400/30 group-hover:border-cyan-400" : "border-amber-900/30 group-hover:border-amber-600"
+                    )}
+                    referrerPolicy="no-referrer"
+                  />
+                  <div>
+                    <h3 className={cn(
+                      "text-3xl font-black mb-1",
+                      theme === 'futuristic' ? "text-white" : "text-amber-100 font-serif"
+                    )}>
+                      {figure.name}
+                    </h3>
+                    <p className="opacity-40 text-[10px] tracking-widest uppercase font-bold">
+                      {figure.category} • {figure.period}
+                    </p>
+                  </div>
+                </div>
+                
+                <p className="text-sm opacity-60 line-clamp-2">
+                  {figure.description}
                 </p>
+
+                <div className="flex flex-wrap gap-2 mt-auto">
+                  {figure.personalityTraits.map(trait => (
+                    <span key={trait} className={cn(
+                      "px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest",
+                      theme === 'futuristic' ? "bg-cyan-500/10 text-cyan-400" : "bg-amber-900/20 text-amber-500"
+                    )}>
+                      {trait}
+                    </span>
+                  ))}
+                </div>
               </motion.button>
-            );
-          })}
+            ))}
+          </AnimatePresence>
         </div>
       </div>
     );
@@ -177,7 +244,7 @@ export const TalkMode: React.FC = () => {
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-6">
                   <button 
-                    onClick={() => { setSelectedPeriod(null); setActiveFigureId(null); setMessages([]); }}
+                    onClick={() => { setActiveFigureId(null); setMessages([]); }}
                     className={cn(
                       "p-3 rounded-xl transition-all",
                       theme === 'futuristic' ? "bg-cyan-500/10 text-white hover:bg-cyan-500/20" : "bg-amber-900/20 text-amber-100 hover:bg-amber-900/40"
@@ -186,19 +253,40 @@ export const TalkMode: React.FC = () => {
                     <ArrowLeft size={20} />
                   </button>
                   <h3 className={cn("text-2xl font-black", theme === 'futuristic' ? "text-white" : "text-amber-100 font-serif")}>
-                    {selectedPeriod}
+                    Switch Character
                   </h3>
                 </div>
-                <button 
-                  onClick={() => setIsSelectionOpen(false)}
-                  className="text-xs uppercase tracking-widest opacity-60 hover:opacity-100 transition-opacity font-bold"
-                >
-                  Close Panel
-                </button>
+                <div className="flex gap-2">
+                  {CATEGORIES.map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => setSelectedCategory(cat)}
+                      className={cn(
+                        "px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all",
+                        selectedCategory === cat
+                          ? (theme === 'futuristic' ? "bg-cyan-500 text-black" : "bg-amber-600 text-white")
+                          : (theme === 'futuristic' ? "bg-white/5 text-white" : "bg-amber-900/20 text-amber-200")
+                      )}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setSelectedCategory('All')}
+                    className={cn(
+                      "px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all",
+                      selectedCategory === 'All'
+                        ? (theme === 'futuristic' ? "bg-cyan-500 text-black" : "bg-amber-600 text-white")
+                        : (theme === 'futuristic' ? "bg-white/5 text-white" : "bg-amber-900/20 text-amber-200")
+                    )}
+                  >
+                    All
+                  </button>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {figuresInPeriod.map((figure) => (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-h-[60vh] overflow-y-auto p-2">
+                {filteredFigures.map((figure) => (
                   <button
                     key={figure.id}
                     onClick={() => {

@@ -3,18 +3,40 @@ export type Theme = 'futuristic' | 'ancient';
 export type AppMode = 'home' | 'history' | 'talk' | 'museum' | 'mythology';
 
 export type TimelinePeriod = 
-  | 'Stone Age' 
-  | 'Ancient Civilizations' 
-  | 'Classical Era' 
-  | 'Medieval Period' 
-  | 'Early Modern Period' 
-  | 'Modern History' 
-  | 'Contemporary';
+  | 'Stone Age'
+  | 'Bronze Age'
+  | 'Iron Age'
+  | 'Ancient Civilizations'
+  | 'Classical Era'
+  | 'Medieval Era'
+  | 'Renaissance'
+  | 'Industrial Revolution'
+  | 'Modern Era'
+  | 'Contemporary Era';
+
+export interface Era {
+  id: string;
+  title: TimelinePeriod;
+  description: string;
+  yearRange: string;
+  imageUrl: string;
+  heroImage: string;
+  gallery: { url: string; caption: string }[];
+  facts: {
+    dailyLife: string[];
+    events: string[];
+    innovations: string[];
+    funFacts: string[];
+  };
+}
+
+export type FigureCategory = 'Leader' | 'Scientist' | 'Thinker' | 'Explorer' | 'Artist' | 'Warrior';
 
 export interface HistoricalFigure {
   id: string;
   name: string;
   period: TimelinePeriod;
+  category: FigureCategory;
   role: 'main' | 'side' | 'guide' | 'fun';
   description: string;
   avatar: string;

@@ -2,31 +2,44 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { useApp } from './Layout';
 import { cn } from '../lib/utils';
-import { Map, MessageSquare, Sparkles } from 'lucide-react';
+import { Clock, MessageSquare, Sparkles } from 'lucide-react';
 
 export const Home: React.FC = () => {
   const { theme, setMode } = useApp();
 
   return (
-    <div className="h-full flex flex-col items-center justify-center px-6 text-center relative overflow-hidden">
+    <div className="min-h-full flex flex-col items-center py-20 px-6 text-center relative overflow-x-hidden">
       {/* Decorative Background Elements */}
-      <div className="absolute inset-0 pointer-events-none">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <img 
           src={theme === 'futuristic' ? "https://picsum.photos/seed/cyber/1920/1080" : "https://picsum.photos/seed/ancient/1920/1080"} 
           alt="" 
-          className="absolute inset-0 w-full h-full object-cover opacity-10 visual-style"
+          className="absolute inset-0 w-full h-full object-cover opacity-10 visual-style scale-110"
           referrerPolicy="no-referrer"
         />
         {theme === 'futuristic' ? (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full">
+          <div className="absolute inset-0">
+            <div className="absolute top-0 left-0 w-full h-full bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:20px_20px]" />
             <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-cyan-400 rounded-full animate-ping" />
             <div className="absolute bottom-1/4 right-1/3 w-1 h-1 bg-purple-500 rounded-full animate-pulse" />
-            <div className="absolute top-1/3 right-1/4 w-[1px] h-20 bg-gradient-to-b from-cyan-500 to-transparent" />
+            <div className="absolute top-1/3 right-1/4 w-[1px] h-40 bg-gradient-to-b from-cyan-500 to-transparent opacity-50" />
+            <div className="absolute bottom-1/3 left-1/5 w-[1px] h-60 bg-gradient-to-t from-purple-500 to-transparent opacity-30" />
+            
+            {/* Holographic HUD elements */}
+            <div className="absolute top-10 right-10 w-48 h-48 border border-cyan-500/10 rounded-full flex items-center justify-center">
+              <div className="w-40 h-40 border border-cyan-500/5 rounded-full animate-spin" style={{ animationDuration: '20s' }} />
+              <div className="absolute text-[8px] font-mono text-cyan-500/40 tracking-widest uppercase">System Active</div>
+            </div>
           </div>
         ) : (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full">
-            <div className="absolute top-1/4 right-1/4 w-4 h-4 bg-orange-500/20 rounded-full blur-sm animate-pulse" />
-            <div className="absolute bottom-1/3 left-1/4 w-3 h-3 bg-yellow-600/20 rounded-full blur-sm animate-pulse" />
+          <div className="absolute inset-0">
+            <div className="absolute top-1/4 right-1/4 w-8 h-8 bg-orange-500/10 rounded-full blur-xl animate-pulse" />
+            <div className="absolute bottom-1/3 left-1/4 w-6 h-6 bg-yellow-600/10 rounded-full blur-xl animate-pulse" />
+            
+            {/* Ancient ruins silhouettes */}
+            <div className="absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-black/40 to-transparent opacity-20" />
+            <div className="absolute bottom-0 left-10 w-32 h-96 bg-amber-900/10 rounded-t-full blur-sm" />
+            <div className="absolute bottom-0 right-20 w-48 h-[30rem] bg-amber-900/10 rounded-t-full blur-sm" />
           </div>
         )}
       </div>
@@ -35,7 +48,7 @@ export const Home: React.FC = () => {
         initial={{ scale: 0.5, opacity: 0, rotate: -180 }}
         animate={{ scale: 1, opacity: 1, rotate: 0 }}
         transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
-        className="relative mb-16"
+        className="relative mb-8"
       >
         <div className={cn(
           "w-80 h-80 rounded-full flex items-center justify-center relative",
@@ -108,7 +121,7 @@ export const Home: React.FC = () => {
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 1 }}
           className={cn(
-            "max-w-2xl text-xl mb-16 mx-auto leading-relaxed",
+            "max-w-2xl text-xl mb-12 mx-auto leading-relaxed",
             theme === 'futuristic' ? "text-cyan-100/80" : "text-amber-200/70 italic"
           )}
         >
@@ -117,12 +130,12 @@ export const Home: React.FC = () => {
             : "Listen closely to the whispers of the ancients. The stone remembers what the wind has forgotten."}
         </motion.p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-5xl mx-auto mb-20">
           <ModeCard 
-            title="Expedition" 
-            desc="Explore the world as it once was, from the heart of Rome to the pyramids of Giza." 
+            title="Timeline" 
+            desc="Scroll through the ages. Explore pivotal eras from the Stone Age to the Contemporary Era." 
             onClick={() => setMode('history')} 
-            icon={<Map size={32} />}
+            icon={<Clock size={32} />}
           />
           <ModeCard 
             title="Comm-Link" 
@@ -131,6 +144,17 @@ export const Home: React.FC = () => {
             icon={<MessageSquare size={32} />}
           />
         </div>
+
+        {/* Scroll Indicator */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: [0, 1, 0] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          className="flex flex-col items-center gap-2 text-white/30"
+        >
+          <span className="text-[10px] uppercase tracking-[0.3em]">Scroll to Discover</span>
+          <div className="w-[1px] h-12 bg-gradient-to-b from-white/30 to-transparent" />
+        </motion.div>
       </div>
     </div>
   );

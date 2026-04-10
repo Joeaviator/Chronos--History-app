@@ -1,14 +1,20 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Theme, AppMode } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles, Scroll, Map, MessageSquare, Home, History } from 'lucide-react';
+import { Sparkles, Scroll, Clock, MessageSquare, Home, History, LogIn, LogOut, User as UserIcon } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { auth, db, googleProvider, signInWithPopup, signOut, onAuthStateChanged, User, doc, getDoc, setDoc, OperationType, handleFirestoreError } from '../firebase';
+import { serverTimestamp } from 'firebase/firestore';
 
 interface AppContextType {
   theme: Theme;
   setTheme: (theme: Theme) => void;
   mode: AppMode;
   setMode: (mode: AppMode) => void;
+  user: User | null;
+  loading: boolean;
+  login: () => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -22,22 +28,79 @@ export const useApp = () => {
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setTheme] = useState<Theme>('futuristic');
   const [mode, setMode] = useState<AppMode>('home');
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     document.body.className = `theme-${theme}`;
   }, [theme]);
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        // Sync user profile to Firestore
+        const userRef = doc(db, 'users', currentUser.uid);
+        try {
+          const userDoc = await getDoc(userRef);
+          if (!userDoc.exists()) {
+            await setDoc(userRef, {
+              uid: currentUser.uid,
+              displayName: currentUser.displayName,
+              email: currentUser.email,
+              photoURL: currentUser.photoURL,
+              createdAt: serverTimestamp(),
+              lastLogin: serverTimestamp(),
+              role: 'user'
+            });
+          } else {
+            await setDoc(userRef, {
+              lastLogin: serverTimestamp()
+            }, { merge: true });
+          }
+        } catch (error) {
+          console.error("Error syncing user profile:", error);
+          // We don't use handleFirestoreError here to avoid blocking the app on initial load if rules are still propagating
+        }
+      }
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const login = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (error) {
+      console.error("Login failed:", error);
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      setMode('home');
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
   return (
-    <AppContext.Provider value={{ theme, setTheme, mode, setMode }}>
+    <AppContext.Provider value={{ theme, setTheme, mode, setMode, user, loading, login, logout }}>
       {children}
     </AppContext.Provider>
   );
 };
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { theme, setTheme, mode, setMode } = useApp();
+  const { theme, setTheme, mode, setMode, user, loading, login, logout } = useApp();
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    setScrollY(e.currentTarget.scrollTop);
+  };
 
   const toggleTheme = () => {
     setIsTransitioning(true);
@@ -47,29 +110,68 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     }, 500);
   };
 
+  if (loading) {
+    return (
+      <div className={cn(
+        "min-h-screen flex items-center justify-center",
+        theme === 'futuristic' ? "bg-black text-cyan-400" : "bg-[#1a140e] text-amber-500"
+      )}>
+        <div className="flex flex-col items-center gap-4">
+          <div className={cn(
+            "w-16 h-16 border-4 border-t-transparent rounded-full animate-spin",
+            theme === 'futuristic' ? "border-cyan-500" : "border-amber-600"
+          )} />
+          <p className="font-bold tracking-widest uppercase animate-pulse">Initializing Chronos...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden">
       {/* Background Atmosphere */}
-      <div className="fixed inset-0 pointer-events-none z-0">
+      <motion.div 
+        className="fixed inset-0 pointer-events-none z-0"
+        style={{ y: scrollY * -0.1 }} // Parallax effect
+      >
         {/* Futuristic Background */}
         <div className={cn(
           "absolute inset-0 transition-opacity duration-1000",
           theme === 'futuristic' ? "opacity-100" : "opacity-0"
         )}>
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px]" />
           <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-cyan-500/10 blur-[150px] rounded-full animate-pulse" />
           <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-purple-600/10 blur-[150px] rounded-full animate-pulse" />
           
-          {/* Data Streams */}
-          <div className="absolute inset-0 overflow-hidden opacity-10">
-            {[...Array(10)].map((_, i) => (
+          {/* Data Streams & Holographic Blocks */}
+          <div className="absolute inset-0 overflow-hidden opacity-20">
+            {[...Array(15)].map((_, i) => (
               <motion.div
                 key={i}
                 initial={{ y: -100, x: Math.random() * 100 + '%' }}
                 animate={{ y: '110vh' }}
                 transition={{ duration: Math.random() * 5 + 5, repeat: Infinity, ease: "linear", delay: Math.random() * 5 }}
-                className="w-[1px] h-32 bg-cyan-400"
+                className="w-[1px] h-32 bg-cyan-400/50"
               />
+            ))}
+            {[...Array(8)].map((_, i) => (
+              <motion.div
+                key={`block-${i}`}
+                animate={{ 
+                  y: [0, -20, 0],
+                  opacity: [0.1, 0.3, 0.1],
+                  rotate: [i * 15, i * 15 + 5, i * 15]
+                }}
+                transition={{ duration: 4 + i, repeat: Infinity }}
+                className="absolute w-32 h-32 border border-cyan-500/20 rounded-lg flex items-center justify-center"
+                style={{ 
+                  left: (10 + i * 12) + '%', 
+                  top: (5 + i * 15) + '%',
+                }}
+              >
+                <div className="w-16 h-16 border border-cyan-500/10 rounded-full animate-ping" />
+              </motion.div>
             ))}
           </div>
         </div>
@@ -80,11 +182,41 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           theme === 'ancient' ? "opacity-100" : "opacity-0"
         )}>
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')] opacity-40" />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-orange-900/5 to-black/40" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-orange-900/5 to-black/60" />
           
+          {/* Pillars & Statues (Abstract) */}
+          <div className="absolute inset-0 opacity-20 pointer-events-none">
+            <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-amber-900/40 to-transparent border-r-4 border-amber-900/30 flex flex-col justify-around items-center py-20">
+              {[...Array(5)].map((_, i) => <div key={i} className="w-16 h-32 bg-amber-900/20 rounded-t-full border-2 border-amber-900/30" />)}
+            </div>
+            <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-amber-900/40 to-transparent border-l-4 border-amber-900/30 flex flex-col justify-around items-center py-20">
+              {[...Array(5)].map((_, i) => <div key={i} className="w-16 h-32 bg-amber-900/20 rounded-t-full border-2 border-amber-900/30" />)}
+            </div>
+            
+            {/* Floating Runes */}
+            {[...Array(20)].map((_, i) => (
+              <motion.div
+                key={`rune-${i}`}
+                animate={{ 
+                  opacity: [0.1, 0.5, 0.1],
+                  y: [0, -20, 0],
+                  rotate: [0, 10, -10, 0]
+                }}
+                transition={{ duration: 6 + i, repeat: Infinity }}
+                className="absolute text-amber-500/20 font-serif text-5xl rune-glow"
+                style={{ 
+                  left: (5 + Math.random() * 90) + '%', 
+                  top: (5 + Math.random() * 90) + '%' 
+                }}
+              >
+                {['ᚠ', 'ᚢ', 'ᚦ', 'ᚨ', 'ᚱ', 'ᚲ', 'ᚷ', 'ᚹ', 'ᚺ', 'ᚻ', 'ᚼ'][i % 11]}
+              </motion.div>
+            ))}
+          </div>
+
           {/* Dust Particles */}
           <div className="absolute inset-0 overflow-hidden">
-            {[...Array(30)].map((_, i) => (
+            {[...Array(40)].map((_, i) => (
               <div 
                 key={i} 
                 className="dust-particle" 
@@ -99,10 +231,28 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           </div>
 
           {/* Torch Flickers */}
-          <div className="absolute top-20 left-10 w-32 h-32 bg-orange-500/10 blur-[60px] rounded-full torch-glow" />
-          <div className="absolute bottom-20 right-10 w-40 h-40 bg-yellow-600/10 blur-[80px] rounded-full torch-glow" />
+          <div className="absolute top-20 left-10 w-48 h-48 bg-orange-500/10 blur-[80px] rounded-full torch-glow" />
+          <div className="absolute bottom-20 right-10 w-64 h-64 bg-yellow-600/10 blur-[100px] rounded-full torch-glow" />
+          <div className="absolute top-1/2 right-0 w-32 h-96 bg-orange-600/5 blur-[90px] rounded-full torch-glow" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-amber-900/5 blur-[120px] rounded-full" />
+          
+          {/* Moving Shadows */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-30">
+            {[...Array(3)].map((_, i) => (
+              <motion.div
+                key={`shadow-${i}`}
+                animate={{ 
+                  x: [-100, 100, -100],
+                  opacity: [0.1, 0.3, 0.1]
+                }}
+                transition={{ duration: 15 + i * 5, repeat: Infinity, ease: "linear" }}
+                className="absolute w-[40vw] h-full bg-black/40 blur-[100px]"
+                style={{ left: (i * 30) + '%' }}
+              />
+            ))}
+          </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Theme Transition Overlay */}
       <AnimatePresence>
@@ -173,10 +323,58 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           </div>
 
           {/* Navigation Links */}
-          <div className="flex-1 px-3 py-6 flex flex-col gap-4">
+          <div className="px-3 py-12 flex flex-col gap-4">
             <SidebarButton icon={<Home size={22} />} active={mode === 'home'} onClick={() => setMode('home')} label="Home" expanded={isSidebarExpanded} />
-            <SidebarButton icon={<Map size={22} />} active={mode === 'history'} onClick={() => setMode('history')} label="Expedition" expanded={isSidebarExpanded} />
+            <SidebarButton icon={<Clock size={22} />} active={mode === 'history'} onClick={() => setMode('history')} label="Timeline" expanded={isSidebarExpanded} />
             <SidebarButton icon={<MessageSquare size={22} />} active={mode === 'talk'} onClick={() => setMode('talk')} label="Comm-Link" expanded={isSidebarExpanded} />
+          </div>
+
+          <div className="flex-1" />
+
+          {/* User Profile / Auth */}
+          <div className="p-3 border-t border-white/5">
+            {user ? (
+              <div className="flex flex-col gap-2">
+                <div className={cn(
+                  "flex items-center gap-4 p-3 rounded-xl transition-all duration-300",
+                  theme === 'futuristic' ? "bg-cyan-500/10" : "bg-amber-900/20"
+                )}>
+                  <img 
+                    src={user.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`} 
+                    alt="User" 
+                    className="w-10 h-10 rounded-full border-2 border-current"
+                  />
+                  <AnimatePresence>
+                    {isSidebarExpanded && (
+                      <motion.div
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -10 }}
+                        className="flex-1 min-w-0"
+                      >
+                        <p className="text-xs font-bold truncate">{user.displayName}</p>
+                        <p className="text-[10px] opacity-50 truncate">{user.email}</p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+                <SidebarButton 
+                  icon={<LogOut size={22} />} 
+                  active={false} 
+                  onClick={logout} 
+                  label="Sign Out" 
+                  expanded={isSidebarExpanded} 
+                />
+              </div>
+            ) : (
+              <SidebarButton 
+                icon={<LogIn size={22} />} 
+                active={false} 
+                onClick={login} 
+                label="Sign In" 
+                expanded={isSidebarExpanded} 
+              />
+            )}
           </div>
 
           {/* Theme Toggle at Bottom */}
@@ -210,8 +408,11 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         </motion.aside>
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-          <main className="flex-1 relative z-10 overflow-y-auto">
+        <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden relative">
+          <main 
+            className="flex-1 relative z-10 overflow-y-auto scroll-smooth"
+            onScroll={handleScroll}
+          >
             <AnimatePresence mode="wait">
               <motion.div
                 key={mode}
@@ -225,6 +426,15 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               </motion.div>
             </AnimatePresence>
           </main>
+
+          {/* Bottom Gradient Fade (Visual Hint for Scroll) */}
+          <div className={cn(
+            "absolute bottom-0 left-0 right-0 h-32 pointer-events-none z-20 transition-opacity duration-500",
+            scrollY > 100 ? "opacity-0" : "opacity-100",
+            theme === 'futuristic' 
+              ? "bg-gradient-to-t from-black to-transparent" 
+              : "bg-gradient-to-t from-[#1a140e] to-transparent"
+          )} />
         </div>
       </div>
     </div>
@@ -245,12 +455,23 @@ const SidebarButton: React.FC<{
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
       className={cn(
-        "relative flex items-center gap-4 p-4 rounded-xl transition-all duration-300 group overflow-hidden",
+        "relative flex items-center gap-4 p-4 rounded-xl transition-all duration-300 group overflow-hidden mx-2",
         active 
-          ? (theme === 'futuristic' ? "bg-cyan-500 text-black neon-glow" : "bg-amber-600 text-black shadow-inner")
+          ? (theme === 'futuristic' ? "bg-cyan-500 text-black neon-glow" : "bg-amber-600 text-black shadow-lg")
           : (theme === 'futuristic' ? "text-cyan-400/40 hover:text-cyan-400 hover:bg-cyan-500/5" : "text-amber-100/40 hover:text-amber-100 hover:bg-amber-900/10")
       )}
     >
+      {/* Rectangular Tab Indicator */}
+      {active && (
+        <motion.div
+          layoutId="sidebar-active-indicator"
+          className={cn(
+            "absolute left-0 top-0 bottom-0 w-1",
+            theme === 'futuristic' ? "bg-white" : "bg-amber-200"
+          )}
+        />
+      )}
+      
       <div className="shrink-0 relative z-10">
         {icon}
       </div>
@@ -275,16 +496,6 @@ const SidebarButton: React.FC<{
         )}>
           {label}
         </span>
-      )}
-
-      {active && (
-        <motion.div
-          layoutId="sidebar-active"
-          className={cn(
-            "absolute inset-0 -z-0",
-            theme === 'futuristic' ? "bg-cyan-400" : "bg-amber-500"
-          )}
-        />
       )}
     </motion.button>
   );

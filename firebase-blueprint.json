@@ -1,0 +1,42 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Stores basic user information.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Unique user ID from Firebase Auth." },
+        "displayName": { "type": "string", "description": "User's display name." },
+        "email": { "type": "string", "format": "email", "description": "User's email address." },
+        "photoURL": { "type": "string", "description": "URL to user's profile picture." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the profile was created." },
+        "lastLogin": { "type": "string", "format": "date-time", "description": "When the user last logged in." },
+        "role": { "type": "string", "enum": ["user", "admin"], "description": "User's role in the application." }
+      },
+      "required": ["uid", "email", "createdAt", "role"]
+    },
+    "UserProgress": {
+      "title": "User Progress",
+      "description": "Stores user's historical exploration progress.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Reference to the user." },
+        "unlockedEras": { "type": "array", "items": { "type": "string" }, "description": "List of era IDs the user has explored." },
+        "completedMissions": { "type": "array", "items": { "type": "string" }, "description": "List of mission IDs completed." },
+        "collectedArtifacts": { "type": "array", "items": { "type": "string" }, "description": "List of artifact IDs collected." },
+        "totalPoints": { "type": "number", "description": "Total points earned." }
+      },
+      "required": ["uid", "unlockedEras", "completedMissions", "collectedArtifacts", "totalPoints"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Collection of user profiles."
+    },
+    "/users/{userId}/progress/data": {
+      "schema": "UserProgress",
+      "description": "Detailed progress data for a specific user."
+    }
+  }
+}
