@@ -1,11 +1,17 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, onSnapshot, getDocs, getDocFromServer } from 'firebase/firestore';
+import { initializeFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, onSnapshot, getDocs, getDocFromServer } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+
+// Initialize Firestore with specific database ID and settings
+const databaseId = (firebaseConfig as any).firestoreDatabaseId;
+export const db = initializeFirestore(app, {
+  experimentalAutoDetectLongPolling: true
+}, databaseId && databaseId !== '(default)' ? databaseId : undefined);
+
 export const googleProvider = new GoogleAuthProvider();
 
 // Error Handling for Firestore
@@ -64,9 +70,14 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
 async function testConnection() {
   try {
     await getDocFromServer(doc(db, 'test', 'connection'));
+    console.log("Firebase connection successful.");
   } catch (error) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
-      console.error("Please check your Firebase configuration.");
+    if (error instanceof Error) {
+      if (error.message.includes('the client is offline')) {
+        console.error("Firebase Connection Error: The client is offline. This usually means the Project ID or API Key in firebase-applet-config.json is incorrect, or Firestore has not been enabled in the Firebase Console.");
+      } else {
+        console.error("Firebase Connection Error:", error.message);
+      }
     }
   }
 }

@@ -1,6 +1,6 @@
 export type Theme = 'futuristic' | 'ancient';
 
-export type AppMode = 'home' | 'history' | 'talk' | 'museum' | 'mythology';
+export type AppMode = 'home' | 'history' | 'talk' | 'museum' | 'mythology' | 'mission';
 
 export type TimelinePeriod = 
   | 'Stone Age'
@@ -77,6 +77,36 @@ export interface GodParent {
   description: string;
   personality: string;
   iconName: string; // Lucide icon name
+}
+
+export interface MissionStep {
+  id: string;
+  type: 'intro' | 'learn' | 'visual' | 'task' | 'complete';
+  title: string;
+  content: string;
+  imageUrl?: string;
+  items?: {
+    id: string;
+    name: string;
+    description: string;
+    imageUrl: string;
+    function: string;
+  }[];
+  task?: {
+    question: string;
+    options: { id: string; label: string; isCorrect: boolean; feedback: string }[];
+    requiredItems?: string[];
+  };
+}
+
+export interface Mission {
+  id: string;
+  title: string;
+  era: TimelinePeriod;
+  description: string;
+  difficulty: 'Beginner' | 'Intermediate' | 'Expert';
+  steps: MissionStep[];
+  reward: string;
 }
 
 export interface HistoryEvent {

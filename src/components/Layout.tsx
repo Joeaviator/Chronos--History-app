@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Theme, AppMode } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles, Scroll, Clock, MessageSquare, Home, History, LogIn, LogOut, User as UserIcon } from 'lucide-react';
+import { Sparkles, Scroll, Clock, MessageSquare, Home, History, LogIn, LogOut, User as UserIcon, Target } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { auth, db, googleProvider, signInWithPopup, signOut, onAuthStateChanged, User, doc, getDoc, setDoc, OperationType, handleFirestoreError } from '../firebase';
 import { serverTimestamp } from 'firebase/firestore';
+import { syncEcosystemUser } from '../services/ecosystemService';
 
 interface AppContextType {
   theme: Theme;
@@ -15,6 +16,8 @@ interface AppContextType {
   loading: boolean;
   login: () => Promise<void>;
   logout: () => Promise<void>;
+  authError: string | null;
+  setAuthError: (error: string | null) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -30,6 +33,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [mode, setMode] = useState<AppMode>('home');
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     document.body.className = `theme-${theme}`;
@@ -39,6 +43,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
+        // Ecosystem Integration
+        syncEcosystemUser(currentUser, 'STORYTELLER');
+
         // Sync user profile to Firestore
         const userRef = doc(db, 'users', currentUser.uid);
         try {
@@ -69,14 +76,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   const login = async () => {
+    setAuthError(null);
     try {
       await signInWithPopup(auth, googleProvider);
-    } catch (error) {
+    } catch (error: any) {
+      if (error.code === 'auth/popup-closed-by-user') {
+        console.log("User closed the login popup.");
+        return;
+      }
+      if (error.code === 'auth/cancelled-popup-request') {
+        console.log("Login request was cancelled due to another popup being opened.");
+        return;
+      }
+      
       console.error("Login failed:", error);
+      setAuthError(error.message || "An unexpected error occurred during login.");
     }
   };
 
   const logout = async () => {
+    setAuthError(null);
     try {
       await signOut(auth);
       setMode('home');
@@ -86,7 +105,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   return (
-    <AppContext.Provider value={{ theme, setTheme, mode, setMode, user, loading, login, logout }}>
+    <AppContext.Provider value={{ theme, setTheme, mode, setMode, user, loading, login, logout, authError, setAuthError }}>
       {children}
     </AppContext.Provider>
   );
@@ -109,23 +128,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       setTimeout(() => setIsTransitioning(false), 500);
     }, 500);
   };
-
-  if (loading) {
-    return (
-      <div className={cn(
-        "min-h-screen flex items-center justify-center",
-        theme === 'futuristic' ? "bg-black text-cyan-400" : "bg-[#1a140e] text-amber-500"
-      )}>
-        <div className="flex flex-col items-center gap-4">
-          <div className={cn(
-            "w-16 h-16 border-4 border-t-transparent rounded-full animate-spin",
-            theme === 'futuristic' ? "border-cyan-500" : "border-amber-600"
-          )} />
-          <p className="font-bold tracking-widest uppercase animate-pulse">Initializing Chronos...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden">
@@ -326,6 +328,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           <div className="px-3 py-12 flex flex-col gap-4">
             <SidebarButton icon={<Home size={22} />} active={mode === 'home'} onClick={() => setMode('home')} label="Home" expanded={isSidebarExpanded} />
             <SidebarButton icon={<Clock size={22} />} active={mode === 'history'} onClick={() => setMode('history')} label="Timeline" expanded={isSidebarExpanded} />
+            <SidebarButton icon={<Target size={22} />} active={mode === 'mission'} onClick={() => setMode('mission')} label="Missions" expanded={isSidebarExpanded} />
             <SidebarButton icon={<MessageSquare size={22} />} active={mode === 'talk'} onClick={() => setMode('talk')} label="Comm-Link" expanded={isSidebarExpanded} />
           </div>
 
