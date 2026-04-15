@@ -547,6 +547,62 @@ export const HistoryMode: React.FC = () => {
           ))}
         </div>
       </div>
+
+      {/* Fact Ticker */}
+      <FactTicker theme={theme} />
+    </div>
+  );
+};
+
+const FactTicker: React.FC<{ theme: string }> = ({ theme }) => {
+  const allFacts = HISTORY_EVENTS.flatMap(e => e.didYouKnow);
+  
+  return (
+    <div className={cn(
+      "h-12 w-full shrink-0 flex items-center overflow-hidden border-t backdrop-blur-md relative z-50",
+      theme === 'futuristic' ? "bg-black/60 border-cyan-500/20" : "bg-[#1a140e]/80 border-amber-900/40"
+    )}>
+      <div className={cn(
+        "flex items-center gap-3 px-6 h-full shrink-0 z-20 relative",
+        theme === 'futuristic' ? "bg-cyan-500 text-black" : "bg-amber-600 text-white"
+      )}>
+        <Sparkles size={14} className="animate-pulse" />
+        <span className="text-[10px] font-black uppercase tracking-[0.2em] whitespace-nowrap">Did You Know?</span>
+        {/* Slanted edge effect */}
+        <div className={cn(
+          "absolute top-0 -right-4 h-full w-4",
+          theme === 'futuristic' ? "bg-cyan-500 [clip-path:polygon(0_0,0_100%,100%_0)]" : "bg-amber-600 [clip-path:polygon(0_0,0_100%,100%_0)]"
+        )} />
+      </div>
+      
+      <div className="flex-1 overflow-hidden relative h-full flex items-center">
+        <motion.div
+          animate={{ x: ["0%", "-50%"] }}
+          transition={{ 
+            duration: 120, 
+            repeat: Infinity, 
+            ease: "linear" 
+          }}
+          className="flex items-center gap-16 whitespace-nowrap px-12"
+        >
+          {[...allFacts, ...allFacts].map((fact, i) => (
+            <div key={i} className="flex items-center gap-4">
+              <div className={cn(
+                "w-1 h-1 rounded-full",
+                theme === 'futuristic' ? "bg-cyan-500/40" : "bg-amber-500/40"
+              )} />
+              <span 
+                className={cn(
+                  "text-[11px] font-bold tracking-wide uppercase",
+                  theme === 'futuristic' ? "text-cyan-400/70" : "text-amber-200/60"
+                )}
+              >
+                {fact}
+              </span>
+            </div>
+          ))}
+        </motion.div>
+      </div>
     </div>
   );
 };

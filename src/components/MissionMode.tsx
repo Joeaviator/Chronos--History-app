@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { BookOpen, Eye, Zap, CheckCircle2, ChevronRight, ChevronLeft, Trophy, Info, AlertCircle } from 'lucide-react';
+import { BookOpen, Eye, Zap, CheckCircle2, ChevronRight, ChevronLeft, Trophy, Info, AlertCircle, Target, RotateCcw } from 'lucide-react';
 import { Mission, MissionStep } from '../types';
 import { MISSIONS } from '../constants/missions';
 import { useApp } from './Layout';
@@ -9,44 +9,82 @@ import { cn } from '../lib/utils';
 export const MissionMode: React.FC = () => {
   const { theme } = useApp();
   const [selectedMission, setSelectedMission] = useState<Mission | null>(null);
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [currentStepId, setCurrentStepId] = useState<string | null>(null);
   const [completedMissions, setCompletedMissions] = useState<string[]>([]);
-  const [taskFeedback, setTaskFeedback] = useState<{ isCorrect: boolean; message: string } | null>(null);
+  const [taskFeedback, setTaskFeedback] = useState<{ isCorrect: boolean; message: string; nextStepId?: string } | null>(null);
+  const [totalXp, setTotalXp] = useState(0);
+  const [missionXp, setMissionXp] = useState(0);
+  const [showHint, setShowHint] = useState(false);
+  const [history, setHistory] = useState<string[]>([]);
 
   const currentMission = selectedMission;
-  const currentStep = currentMission?.steps[currentStepIndex];
+  const currentStep = currentMission?.steps.find(s => s.id === (currentStepId || currentMission.steps[0].id));
+  const currentStepIndex = currentMission?.steps.findIndex(s => s.id === currentStep?.id) ?? 0;
 
   const handleNext = () => {
-    if (!currentMission) return;
-    if (currentStepIndex < currentMission.steps.length - 1) {
-      setCurrentStepIndex(prev => prev + 1);
+    if (!currentMission || !currentStep) return;
+    
+    // Check if we have a branching path from task feedback
+    if (taskFeedback?.nextStepId) {
+      setHistory(prev => [...prev, currentStep.id]);
+      setCurrentStepId(taskFeedback.nextStepId);
       setTaskFeedback(null);
+      setShowHint(false);
+      return;
+    }
+
+    // Default sequential progression
+    if (currentStepIndex < currentMission.steps.length - 1) {
+      setHistory(prev => [...prev, currentStep.id]);
+      const nextStep = currentMission.steps[currentStepIndex + 1];
+      setCurrentStepId(nextStep.id);
+      setTaskFeedback(null);
+      setShowHint(false);
+      
+      // Add XP for completing the step
+      if (currentStep.xpValue) {
+        setMissionXp(prev => prev + currentStep.xpValue!);
+      }
     }
   };
 
   const handleBack = () => {
-    if (currentStepIndex > 0) {
-      setCurrentStepIndex(prev => prev - 1);
+    if (history.length > 0) {
+      const prevStepId = history[history.length - 1];
+      setHistory(prev => prev.slice(0, -1));
+      setCurrentStepId(prevStepId);
       setTaskFeedback(null);
+      setShowHint(false);
     }
   };
 
-  const handleTaskOption = (option: { isCorrect: boolean; feedback: string }) => {
+  const handleTaskOption = (option: any) => {
     setTaskFeedback({
-      isCorrect: option.isCorrect,
-      message: option.feedback
+      isCorrect: option.isCorrect ?? true,
+      message: option.feedback,
+      nextStepId: option.nextStepId
     });
 
-    if (option.isCorrect && currentMission) {
-      // Auto-advance after a delay if correct? Or let user click next
+    if (option.impact?.xpBonus) {
+      setMissionXp(prev => prev + option.impact.xpBonus);
     }
+  };
+
+  const startMission = (mission: Mission) => {
+    setSelectedMission(mission);
+    setCurrentStepId(mission.steps[0].id);
+    setMissionXp(0);
+    setHistory([]);
+    setTaskFeedback(null);
   };
 
   const finishMission = () => {
     if (currentMission) {
       setCompletedMissions(prev => [...prev, currentMission.id]);
+      setTotalXp(prev => prev + missionXp + currentMission.reward.xp);
       setSelectedMission(null);
-      setCurrentStepIndex(0);
+      setCurrentStepId(null);
+      setHistory([]);
     }
   };
 
@@ -62,12 +100,21 @@ export const MissionMode: React.FC = () => {
             className="space-y-8"
           >
             <div className="space-y-2">
-              <h2 className={cn(
-                "text-4xl font-black tracking-tight",
-                theme === 'futuristic' ? "text-cyan-400" : "text-amber-500 font-serif"
-              )}>
-                MISSION COMMAND
-              </h2>
+              <div className="flex justify-between items-end">
+                <h2 className={cn(
+                  "text-4xl font-black tracking-tight",
+                  theme === 'futuristic' ? "text-cyan-400" : "text-amber-500 font-serif"
+                )}>
+                  MISSION COMMAND
+                </h2>
+                <div className={cn(
+                  "px-4 py-2 rounded-xl border flex items-center gap-2",
+                  theme === 'futuristic' ? "bg-cyan-500/10 border-cyan-500/30 text-cyan-400" : "bg-amber-900/20 border-amber-900/30 text-amber-500"
+                )}>
+                  <Zap size={16} />
+                  <span className="text-sm font-black tracking-widest">{totalXp} XP</span>
+                </div>
+              </div>
               <p className="text-lg opacity-60">Select a historical operation to begin your interactive training.</p>
             </div>
 
@@ -76,7 +123,7 @@ export const MissionMode: React.FC = () => {
                 <motion.div
                   key={mission.id}
                   whileHover={{ scale: 1.02, y: -5 }}
-                  onClick={() => setSelectedMission(mission)}
+                  onClick={() => startMission(mission)}
                   className={cn(
                     "p-6 rounded-2xl border-2 cursor-pointer transition-all duration-300 relative overflow-hidden group",
                     theme === 'futuristic' 
@@ -105,7 +152,7 @@ export const MissionMode: React.FC = () => {
                     <p className="text-sm opacity-70 line-clamp-2">{mission.description}</p>
                     <div className="flex items-center gap-4 text-xs font-bold opacity-50">
                       <span className="flex items-center gap-1"><Zap size={14} /> {mission.difficulty}</span>
-                      <span className="flex items-center gap-1"><Trophy size={14} /> {mission.reward}</span>
+                      <span className="flex items-center gap-1"><Trophy size={14} /> {mission.reward.xp} XP</span>
                     </div>
                   </div>
                   
@@ -155,8 +202,8 @@ export const MissionMode: React.FC = () => {
                 </div>
               </div>
               <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10">
-                <Trophy size={16} className={theme === 'futuristic' ? "text-cyan-400" : "text-amber-500"} />
-                <span className="text-xs font-bold uppercase tracking-tighter">{currentMission.reward}</span>
+                <Zap size={16} className={theme === 'futuristic' ? "text-cyan-400" : "text-amber-500"} />
+                <span className="text-xs font-bold uppercase tracking-tighter">{missionXp} XP</span>
               </div>
             </div>
 
@@ -217,9 +264,11 @@ export const MissionMode: React.FC = () => {
                       </div>
 
                       {/* Task Options */}
-                      {currentStep?.type === 'task' && currentStep.task && (
+                      {(currentStep?.type === 'task' || currentStep?.type === 'scenario') && currentStep.task && (
                         <div className="space-y-4 pt-4">
-                          <h4 className="text-sm font-bold uppercase tracking-widest opacity-50">Choose Wisely:</h4>
+                          <h4 className="text-sm font-bold uppercase tracking-widest opacity-50">
+                            {currentStep.type === 'scenario' ? 'Make a Decision:' : 'Choose Wisely:'}
+                          </h4>
                           <div className="grid gap-3">
                             {currentStep.task.options.map((opt) => (
                               <button
@@ -228,7 +277,7 @@ export const MissionMode: React.FC = () => {
                                 className={cn(
                                   "p-4 rounded-xl border-2 text-left transition-all duration-300 font-bold",
                                   taskFeedback?.message === opt.feedback
-                                    ? (opt.isCorrect ? "bg-green-500/20 border-green-500 text-green-400" : "bg-red-500/20 border-red-500 text-red-400")
+                                    ? (opt.isCorrect !== false ? "bg-green-500/20 border-green-500 text-green-400" : "bg-red-500/20 border-red-500 text-red-400")
                                     : "bg-white/5 border-white/10 hover:border-white/30"
                                 )}
                               >
@@ -244,10 +293,10 @@ export const MissionMode: React.FC = () => {
                                 animate={{ opacity: 1, y: 0 }}
                                 className={cn(
                                   "p-4 rounded-xl flex items-center gap-3",
-                                  taskFeedback.isCorrect ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"
+                                  taskFeedback.isCorrect !== false ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"
                                 )}
                               >
-                                {taskFeedback.isCorrect ? <CheckCircle2 size={20} /> : <AlertCircle size={20} />}
+                                {taskFeedback.isCorrect !== false ? <CheckCircle2 size={20} /> : <AlertCircle size={20} />}
                                 <span className="text-sm font-medium">{taskFeedback.message}</span>
                               </motion.div>
                             )}
@@ -257,6 +306,40 @@ export const MissionMode: React.FC = () => {
                     </div>
 
                     <div className="space-y-6">
+                      {/* Character Hint */}
+                      {currentStep?.characterHint && (
+                        <div className={cn(
+                          "p-6 rounded-3xl border relative overflow-hidden",
+                          theme === 'futuristic' ? "bg-cyan-500/5 border-cyan-500/20" : "bg-amber-900/10 border-amber-900/20"
+                        )}>
+                          <div className="flex items-center gap-4 mb-4">
+                            <div className={cn(
+                              "w-12 h-12 rounded-full border-2 overflow-hidden",
+                              theme === 'futuristic' ? "border-cyan-500" : "border-amber-600"
+                            )}>
+                              <img 
+                                src={`https://picsum.photos/seed/${currentStep.characterHint.figureId}/100/100`} 
+                                alt="Guide" 
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div>
+                              <p className="text-[10px] font-black uppercase tracking-widest opacity-50">Tactical Advice</p>
+                              <p className={cn(
+                                "font-bold",
+                                theme === 'futuristic' ? "text-cyan-400" : "text-amber-500"
+                              )}>{currentStep.characterHint.figureId.toUpperCase()}</p>
+                            </div>
+                          </div>
+                          <p className={cn(
+                            "text-sm italic leading-relaxed",
+                            theme === 'ancient' ? "font-serif" : "font-sans"
+                          )}>
+                            "{currentStep.characterHint.text}"
+                          </p>
+                        </div>
+                      )}
+
                       {/* Image Display */}
                       {currentStep?.imageUrl && (
                         <motion.div 
@@ -314,26 +397,37 @@ export const MissionMode: React.FC = () => {
             <div className="flex items-center justify-between pt-6 border-t border-white/10">
               <button
                 onClick={handleBack}
-                disabled={currentStepIndex === 0}
+                disabled={history.length === 0}
                 className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all disabled:opacity-20 hover:bg-white/5"
               >
                 <ChevronLeft size={20} /> Back
               </button>
 
-              {currentStepIndex === currentMission.steps.length - 1 ? (
-                <button
-                  onClick={finishMission}
-                  className={cn(
-                    "flex items-center gap-2 px-8 py-4 rounded-2xl font-black uppercase tracking-widest transition-all shadow-xl",
-                    theme === 'futuristic' ? "bg-cyan-500 text-black neon-glow" : "bg-amber-600 text-black"
-                  )}
-                >
-                  Complete Mission <Trophy size={20} />
-                </button>
+              {currentStep?.type === 'complete' ? (
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => startMission(currentMission)}
+                    className={cn(
+                      "flex items-center gap-2 px-6 py-4 rounded-2xl font-bold transition-all border-2",
+                      theme === 'futuristic' ? "border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10" : "border-amber-600/30 text-amber-600 hover:bg-amber-600/10"
+                    )}
+                  >
+                    Replay Mission <RotateCcw size={20} />
+                  </button>
+                  <button
+                    onClick={finishMission}
+                    className={cn(
+                      "flex items-center gap-2 px-8 py-4 rounded-2xl font-black uppercase tracking-widest transition-all shadow-xl",
+                      theme === 'futuristic' ? "bg-cyan-500 text-black neon-glow" : "bg-amber-600 text-black"
+                    )}
+                  >
+                    Claim Rewards <Trophy size={20} />
+                  </button>
+                </div>
               ) : (
                 <button
                   onClick={handleNext}
-                  disabled={currentStep?.type === 'task' && !taskFeedback?.isCorrect}
+                  disabled={(currentStep?.type === 'task' || currentStep?.type === 'scenario') && !taskFeedback}
                   className={cn(
                     "flex items-center gap-2 px-8 py-4 rounded-2xl font-black uppercase tracking-widest transition-all disabled:opacity-20 disabled:grayscale",
                     theme === 'futuristic' ? "bg-cyan-500 text-black neon-glow" : "bg-amber-600 text-black"

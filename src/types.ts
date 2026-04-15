@@ -81,10 +81,14 @@ export interface GodParent {
 
 export interface MissionStep {
   id: string;
-  type: 'intro' | 'learn' | 'visual' | 'task' | 'complete';
+  type: 'intro' | 'learn' | 'visual' | 'task' | 'scenario' | 'complete';
   title: string;
   content: string;
   imageUrl?: string;
+  characterHint?: {
+    figureId: string;
+    text: string;
+  };
   items?: {
     id: string;
     name: string;
@@ -94,9 +98,21 @@ export interface MissionStep {
   }[];
   task?: {
     question: string;
-    options: { id: string; label: string; isCorrect: boolean; feedback: string }[];
-    requiredItems?: string[];
+    type: 'multiple-choice' | 'identification' | 'matching' | 'decision';
+    options: { 
+      id: string; 
+      label: string; 
+      isCorrect?: boolean; 
+      feedback: string;
+      nextStepId?: string; // For branching
+      impact?: {
+        difficultyChange?: number;
+        xpBonus?: number;
+      };
+    }[];
+    correctAnswerId?: string;
   };
+  xpValue?: number;
 }
 
 export interface Mission {
@@ -106,7 +122,11 @@ export interface Mission {
   description: string;
   difficulty: 'Beginner' | 'Intermediate' | 'Expert';
   steps: MissionStep[];
-  reward: string;
+  reward: {
+    badge: string;
+    xp: number;
+    unlocks?: string[];
+  };
 }
 
 export interface HistoryEvent {
