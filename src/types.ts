@@ -81,10 +81,14 @@ export interface GodParent {
 
 export interface MissionStep {
   id: string;
-  type: 'intro' | 'learn' | 'visual' | 'task' | 'scenario' | 'complete';
+  type: 'intro' | 'learn' | 'visual' | 'task' | 'scenario' | 'comparison' | 'complete';
   title: string;
   content: string;
   imageUrl?: string;
+  comparison?: {
+    left: { title: string; content: string; imageUrl: string };
+    right: { title: string; content: string; imageUrl: string };
+  };
   characterHint?: {
     figureId: string;
     text: string;

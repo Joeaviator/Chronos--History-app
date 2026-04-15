@@ -263,6 +263,37 @@ export const MissionMode: React.FC = () => {
                         ))}
                       </div>
 
+                      {/* Comparison Step */}
+                      {currentStep?.type === 'comparison' && currentStep.comparison && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                          {[currentStep.comparison.left, currentStep.comparison.right].map((side, idx) => (
+                            <motion.div
+                              key={idx}
+                              initial={{ opacity: 0, x: idx === 0 ? -20 : 20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              className={cn(
+                                "p-6 rounded-3xl border flex flex-col gap-4",
+                                theme === 'futuristic' ? "bg-cyan-500/5 border-cyan-500/20" : "bg-amber-900/10 border-amber-900/20"
+                              )}
+                            >
+                              <div className="aspect-video rounded-2xl overflow-hidden border border-white/10">
+                                <img 
+                                  src={side.imageUrl} 
+                                  alt={side.title} 
+                                  className="w-full h-full object-cover"
+                                  referrerPolicy="no-referrer"
+                                />
+                              </div>
+                              <h5 className={cn(
+                                "text-lg font-bold",
+                                theme === 'futuristic' ? "text-cyan-400" : "text-amber-500"
+                              )}>{side.title}</h5>
+                              <p className="text-sm opacity-70 leading-relaxed">{side.content}</p>
+                            </motion.div>
+                          ))}
+                        </div>
+                      )}
+
                       {/* Task Options */}
                       {(currentStep?.type === 'task' || currentStep?.type === 'scenario') && currentStep.task && (
                         <div className="space-y-4 pt-4">

@@ -1,9 +1,9 @@
 {
-  "apiKey": "AIzaSyB-PCtfyvVk4jgKR3fwK78vhqPC0W_0lqA",
-  "authDomain": "gen-lang-client-0653546461.firebaseapp.com",
-  "projectId": "gen-lang-client-0653546461",
-  "storageBucket": "gen-lang-client-0653546461.firebasestorage.app",
-  "messagingSenderId": "284302123988",
-  "appId": "1:284302123988:web:539af383a282d399546c41",
-  "firestoreDatabaseId": "ai-studio-b01f7cc1-a387-4e70-ac1f-092def9e2753"
+  "apiKey": "REPLACE_WITH_VITE_FIREBASE_API_KEY",
+  "authDomain": "REPLACE_WITH_VITE_FIREBASE_AUTH_DOMAIN",
+  "projectId": "REPLACE_WITH_VITE_FIREBASE_PROJECT_ID",
+  "storageBucket": "REPLACE_WITH_VITE_FIREBASE_STORAGE_BUCKET",
+  "messagingSenderId": "REPLACE_WITH_VITE_FIREBASE_MESSAGING_SENDER_ID",
+  "appId": "REPLACE_WITH_VITE_FIREBASE_APP_ID",
+  "firestoreDatabaseId": "REPLACE_WITH_VITE_FIREBASE_FIRESTORE_DATABASE_ID"
 }

@@ -66,6 +66,25 @@ export const MISSIONS: Mission[] = [
         xpValue: 150
       },
       {
+        id: 'roman-diet-comparison',
+        type: 'comparison',
+        title: 'Dining in the Empire',
+        content: 'Food was a major indicator of social status in Rome. While soldiers ate for endurance, the elite ate for display.',
+        comparison: {
+          left: {
+            title: 'The Soldier\'s Pulse',
+            content: 'A thick porridge of wheat or barley, flavored with salt and occasionally lard or vegetables. High in complex carbs for long marches.',
+            imageUrl: 'https://images.unsplash.com/photo-1598511757337-fe2cad973752?q=80&w=600'
+          },
+          right: {
+            title: 'The Senator\'s Banquet',
+            content: 'Multi-course meals featuring exotic meats (dormice, peacock), garum (fermented fish sauce), and honey-sweetened wine.',
+            imageUrl: 'https://images.unsplash.com/photo-1541140134513-85a161dc4a00?q=80&w=600'
+          }
+        },
+        xpValue: 200
+      },
+      {
         id: 'learn-rank',
         type: 'learn',
         title: 'Ranks and Discipline',
@@ -112,6 +131,25 @@ export const MISSIONS: Mission[] = [
           ]
         },
         xpValue: 150
+      },
+      {
+        id: 'roman-living-comparison',
+        type: 'comparison',
+        title: 'Shelter and Status',
+        content: 'Living conditions varied wildly. A soldier\'s home was his tent, while a wealthy Roman enjoyed a sprawling estate.',
+        comparison: {
+          left: {
+            title: 'The Contubernium',
+            content: 'A leather tent shared by 8 men. Cramped, smoky, and smelling of leather and sweat. Cohesion was built here.',
+            imageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=600'
+          },
+          right: {
+            title: 'The Roman Villa',
+            content: 'A luxurious home with an atrium, peristyle garden, and underfloor heating (hypocaust). A sanctuary of peace.',
+            imageUrl: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?q=80&w=600'
+          }
+        },
+        xpValue: 200
       },
       {
         id: 'task-camp-layout',
@@ -451,6 +489,25 @@ export const MISSIONS: Mission[] = [
         xpValue: 150
       },
       {
+        id: 'v-comparison-life',
+        type: 'comparison',
+        title: 'Warrior vs Farmer',
+        content: 'Not every Viking was a raider. Most were farmers (Bondr) who only took up arms when the Jarl called.',
+        comparison: {
+          left: {
+            title: 'The Drengr',
+            content: 'A full-time warrior seeking glory and gold. His life is defined by the ship and the shield-wall.',
+            imageUrl: 'https://images.unsplash.com/photo-1533154683836-84ea7a0bc310?q=80&w=600'
+          },
+          right: {
+            title: 'The Bondr',
+            content: 'A free farmer who owns land. He grows barley, raises sheep, and is the backbone of Norse society.',
+            imageUrl: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=600'
+          }
+        },
+        xpValue: 200
+      },
+      {
         id: 'v-learn-hull',
         type: 'learn',
         title: 'The Clinker Hull',
@@ -621,6 +678,128 @@ export const MISSIONS: Mission[] = [
         content: 'You returned with the gold, but half your brothers are in Valhalla. The Jarl is pleased with the wealth, but the cost was high. \n\nYou have earned 1200 XP.',
         imageUrl: 'https://images.unsplash.com/photo-1533154683836-84ea7a0bc310?q=80&w=1200',
         xpValue: 200
+      }
+    ]
+  },
+  {
+    id: 'stone-age-survival',
+    title: 'The First Survivalists',
+    era: 'Stone Age',
+    description: 'Master the fundamental skills of survival in the Paleolithic. Fire, shelter, and the hunt await.',
+    difficulty: 'Beginner',
+    reward: {
+      badge: 'First Fire-Bringer',
+      xp: 1000,
+      unlocks: ['The Cave of Altamira - Hidden Gallery']
+    },
+    steps: [
+      {
+        id: 's-intro',
+        type: 'intro',
+        title: 'The Dawn of Humanity',
+        content: 'The year is 30,000 BCE. The ice sheets are retreating, but the nights are still freezing. You are a member of a small tribe of hunter-gatherers. To survive, you must master the environment, understand the animals, and keep the fire burning. Your journey starts here, at the mouth of the Great Cave.',
+        imageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1200',
+        xpValue: 50
+      },
+      {
+        id: 's-learn-fire',
+        type: 'learn',
+        title: 'The Gift of Fire',
+        content: 'Fire is life. It provides warmth, protection from predators, and a way to cook food. In the Stone Age, we use two main methods: percussion (striking flint against pyrite) or friction (the hand drill). \n\nCooking food was a turning point for humanity—it made nutrients easier to absorb and allowed our brains to grow larger.',
+        imageUrl: 'https://images.unsplash.com/photo-1501503060443-ef4119f63baa?q=80&w=1200',
+        items: [
+          {
+            id: 'flint-steel',
+            name: 'Flint and Pyrite',
+            description: 'Stones used to create sparks.',
+            imageUrl: 'https://images.unsplash.com/photo-1501503060443-ef4119f63baa?q=80&w=400',
+            function: 'Creating fire through percussion.'
+          }
+        ],
+        xpValue: 100
+      },
+      {
+        id: 's-task-fire',
+        type: 'task',
+        title: 'Starting the Hearth',
+        content: 'The sun is setting and the wind is picking up. You need to start a fire quickly. What is the best material to catch a tiny spark?',
+        task: {
+          type: 'multiple-choice',
+          question: 'Which material makes the best "tinder"?',
+          options: [
+            { id: 'st1', label: 'Green leaves', isCorrect: false, feedback: 'Too much moisture! They will only smoke.' },
+            { id: 'st2', label: 'Dry fungus or shredded bark', isCorrect: true, feedback: 'Correct! Dry, fibrous materials catch sparks easily.' },
+            { id: 'st3', label: 'Large logs', isCorrect: false, feedback: 'Logs need a strong fire to start; they won\'t catch a spark.' }
+          ]
+        },
+        xpValue: 150
+      },
+      {
+        id: 's-comparison-shelter',
+        type: 'comparison',
+        title: 'Where We Sleep',
+        content: 'Humans are adaptable. Depending on the season and the location, we choose different types of homes.',
+        comparison: {
+          left: {
+            title: 'The Cave',
+            content: 'Natural protection from wind and rain. Cool in summer, but can be damp and hard to heat.',
+            imageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=600'
+          },
+          right: {
+            title: 'The Mammoth-Bone Hut',
+            content: 'Built in open plains using bones for structure and hides for walls. Portable and surprisingly warm.',
+            imageUrl: 'https://images.unsplash.com/photo-1501503060443-ef4119f63baa?q=80&w=600'
+          }
+        },
+        xpValue: 200
+      },
+      {
+        id: 's-learn-diet',
+        type: 'learn',
+        title: 'The Forager\'s Feast',
+        content: 'We don\'t just eat meat. 70% of our diet comes from gathering: nuts, berries, roots, and even insects. \n\nMeat is a high-energy prize, but it\'s dangerous to get. We use every part of the animal—the skin for clothes, the bones for tools, and the fat for fuel.',
+        imageUrl: 'https://images.unsplash.com/photo-1501503060443-ef4119f63baa?q=80&w=1200',
+        xpValue: 100
+      },
+      {
+        id: 's-task-diet',
+        type: 'task',
+        title: 'The Daily Forage',
+        content: 'You are out gathering with the elders. You find a patch of bright red berries. What do you do?',
+        task: {
+          type: 'decision',
+          question: 'How do you handle unknown plants?',
+          options: [
+            { id: 'sd1', label: 'Eat them to see if they are sweet', feedback: 'Dangerous! Many bright berries are toxic. You get sick.', impact: { difficultyChange: 1 } },
+            { id: 'sd2', label: 'Observe if birds eat them first', isCorrect: true, feedback: 'A good survival rule, though not foolproof. Better yet, ask the elder!', impact: { xpBonus: 50 } }
+          ]
+        },
+        xpValue: 150
+      },
+      {
+        id: 's-learn-clothing',
+        type: 'learn',
+        title: 'Dressing for the Ice',
+        content: 'Clothing is our second skin. We use animal hides, but they must be treated. We scrape the fat off with stone tools and "tan" them using brains or smoke to keep them soft and waterproof. \n\nWe use bone needles to sew multiple layers, creating the first tailored clothing in history.',
+        imageUrl: 'https://images.unsplash.com/photo-1501503060443-ef4119f63baa?q=80&w=1200',
+        items: [
+          {
+            id: 'bone-needle',
+            name: 'Bone Needle',
+            description: 'A thin, sharp tool made from bird bone.',
+            imageUrl: 'https://images.unsplash.com/photo-1501503060443-ef4119f63baa?q=80&w=400',
+            function: 'Sewing hides together for warmth.'
+          }
+        ],
+        xpValue: 100
+      },
+      {
+        id: 's-complete',
+        type: 'complete',
+        title: 'Survivor of the Dawn',
+        content: 'You have mastered the basics of Paleolithic life. You can make fire, find food, and build a home. Your tribe is strong because of your knowledge. \n\nYou have earned the **First Fire-Bringer** badge!',
+        imageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1200',
+        xpValue: 300
       }
     ]
   }
