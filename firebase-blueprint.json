@@ -11,7 +11,8 @@
         "photoURL": { "type": "string", "description": "URL to user's profile picture." },
         "createdAt": { "type": "string", "format": "date-time", "description": "When the profile was created." },
         "lastLogin": { "type": "string", "format": "date-time", "description": "When the user last logged in." },
-        "role": { "type": "string", "enum": ["user", "admin"], "description": "User's role in the application." }
+        "role": { "type": "string", "enum": ["user", "admin"], "description": "User's role in the application." },
+        "appsUsed": { "type": "array", "items": { "type": "string" }, "description": "List of apps the user has used in the ecosystem." }
       },
       "required": ["uid", "email", "createdAt", "role"]
     },

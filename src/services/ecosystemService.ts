@@ -18,7 +18,9 @@ export const syncEcosystemUser = async (user: any, appName: string) => {
       displayName: user.displayName,
       photoURL: user.photoURL,
       lastLogin: serverTimestamp(),
-      appsUsed: appsUsed
+      appsUsed: appsUsed,
+      createdAt: existingData?.createdAt || serverTimestamp(),
+      role: existingData?.role || 'user'
     }, { merge: true });
   } catch (error) {
     console.error('Ecosystem Sync Failed:', error);

@@ -15,6 +15,7 @@ service cloud.firestore {
     //   - createdAt: timestamp (required) - Creation time
     //   - lastLogin: timestamp (optional) - Last login time
     //   - role: string (required) - 'user' or 'admin'
+    //   - appsUsed: list (optional) - List of apps used in ecosystem
     //
     // Collection: users/{userId}/progress
     // Document ID: data
@@ -58,11 +59,12 @@ service cloud.firestore {
     // ===============================================================
 
     function isValidUser(data) {
-      return hasOnlyAllowedFields(['uid', 'displayName', 'email', 'photoURL', 'createdAt', 'lastLogin', 'role']) &&
+      return hasOnlyAllowedFields(['uid', 'displayName', 'email', 'photoURL', 'createdAt', 'lastLogin', 'role', 'appsUsed']) &&
              data.uid == request.auth.uid &&
              data.email is string && isValidEmail(data.email) &&
              data.role in ['user', 'admin'] &&
-             data.createdAt is timestamp;
+             data.createdAt is timestamp &&
+             (!('appsUsed' in data) || data.appsUsed is list);
     }
 
     function isValidProgress(data) {
