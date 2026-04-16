@@ -5,7 +5,7 @@ import { cn } from '../lib/utils';
 import { useApp } from './Layout';
 
 export const LandingPage: React.FC = () => {
-  const { login, theme, authError, setAuthError } = useApp();
+  const { login, theme, authError, setAuthError, isConfigPlaceholder } = useApp();
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
@@ -21,6 +21,27 @@ export const LandingPage: React.FC = () => {
       "min-h-screen relative overflow-hidden selection:bg-cyan-500/30",
       theme === 'futuristic' ? "bg-black text-white" : "bg-[#1a140e] text-amber-100"
     )}>
+      {/* Setup Warning Banner */}
+      <AnimatePresence>
+        {isConfigPlaceholder && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            className="relative z-[100] bg-red-600 text-white py-3 px-6 text-center font-bold text-sm tracking-wide shadow-2xl"
+          >
+            <div className="flex items-center justify-center gap-3">
+              <Shield size={18} className="animate-pulse" />
+              <span>CONFIGURATION REQUIRED: Please set your Firebase Secrets in the AI Studio Settings panel to enable login.</span>
+              <div className={cn(
+                "px-2 py-1 rounded text-[10px] font-black uppercase",
+                theme === 'futuristic' ? "bg-black/20" : "bg-black/20"
+              )}>
+                Action Needed
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* Immersive Background Atmosphere */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <motion.div 

@@ -3,7 +3,7 @@ import { Theme, AppMode } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, Scroll, Clock, MessageSquare, Home, History, LogIn, LogOut, User as UserIcon, Target } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { auth, db, googleProvider, signInWithPopup, signOut, onAuthStateChanged, User, doc, getDoc, setDoc, OperationType, handleFirestoreError } from '../firebase';
+import { auth, db, googleProvider, signInWithPopup, signOut, onAuthStateChanged, User, doc, getDoc, setDoc, OperationType, handleFirestoreError, firebaseConfig } from '../firebase';
 import { serverTimestamp } from 'firebase/firestore';
 import { syncEcosystemUser } from '../services/ecosystemService';
 
@@ -18,6 +18,7 @@ interface AppContextType {
   logout: () => Promise<void>;
   authError: string | null;
   setAuthError: (error: string | null) => void;
+  isConfigPlaceholder: boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -34,6 +35,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
+
+  const isConfigPlaceholder = firebaseConfig.apiKey?.includes('REPLACE_WITH');
 
   useEffect(() => {
     document.body.className = `theme-${theme}`;
@@ -105,7 +108,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   return (
-    <AppContext.Provider value={{ theme, setTheme, mode, setMode, user, loading, login, logout, authError, setAuthError }}>
+    <AppContext.Provider value={{ theme, setTheme, mode, setMode, user, loading, login, logout, authError, setAuthError, isConfigPlaceholder }}>
       {children}
     </AppContext.Provider>
   );
