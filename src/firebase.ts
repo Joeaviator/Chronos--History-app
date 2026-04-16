@@ -17,6 +17,11 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
+// Check if we are using placeholders
+if (firebaseConfig.apiKey?.includes('REPLACE_WITH')) {
+  console.warn('Firebase is using placeholder configuration. Please set your VITE_FIREBASE_* secrets in the AI Studio Settings panel.');
+}
+
 // Initialize Firestore with specific database ID and settings
 const databaseId = firebaseConfig.firestoreDatabaseId;
 export const db = initializeFirestore(app, {
