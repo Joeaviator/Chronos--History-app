@@ -18,16 +18,20 @@
     },
     "UserProgress": {
       "title": "User Progress",
-      "description": "Stores user's historical exploration progress.",
+      "description": "Stores user's historical exploration progress and analytics metrics for the StarVortex Command Deck.",
       "type": "object",
       "properties": {
         "uid": { "type": "string", "description": "Reference to the user." },
         "unlockedEras": { "type": "array", "items": { "type": "string" }, "description": "List of era IDs the user has explored." },
         "completedMissions": { "type": "array", "items": { "type": "string" }, "description": "List of mission IDs completed." },
         "collectedArtifacts": { "type": "array", "items": { "type": "string" }, "description": "List of artifact IDs collected." },
-        "totalPoints": { "type": "number", "description": "Total points earned." }
+        "totalPoints": { "type": "number", "description": "Total points earned." },
+        "forecasts_generated": { "type": "number", "description": "Number of AI interactions (Talk Mode)." },
+        "accuracy_score": { "type": "number", "description": "Average performance score in missions (0-100)." },
+        "timeline_events_tracked": { "type": "number", "description": "Number of unique history events explored." },
+        "active_simulations": { "type": "number", "description": "Total number of missions attempted." }
       },
-      "required": ["uid", "unlockedEras", "completedMissions", "collectedArtifacts", "totalPoints"]
+      "required": ["uid", "unlockedEras", "completedMissions", "collectedArtifacts", "totalPoints", "forecasts_generated", "accuracy_score", "timeline_events_tracked", "active_simulations"]
     }
   },
   "firestore": {

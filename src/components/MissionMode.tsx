@@ -1,21 +1,49 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BookOpen, Eye, Zap, CheckCircle2, ChevronRight, ChevronLeft, Trophy, Info, AlertCircle, Target, RotateCcw } from 'lucide-react';
-import { Mission, MissionStep } from '../types';
+import { Mission, MissionStep, UserProgress } from '../types';
 import { MISSIONS } from '../constants/missions';
 import { useApp } from './Layout';
 import { cn } from '../lib/utils';
+import { db, doc, getDoc, setDoc, updateDoc, increment, onSnapshot } from '../firebase';
 
 export const MissionMode: React.FC = () => {
-  const { theme } = useApp();
+  const { theme, user } = useApp();
   const [selectedMission, setSelectedMission] = useState<Mission | null>(null);
   const [currentStepId, setCurrentStepId] = useState<string | null>(null);
-  const [completedMissions, setCompletedMissions] = useState<string[]>([]);
+  const [userProgress, setUserProgress] = useState<UserProgress | null>(null);
   const [taskFeedback, setTaskFeedback] = useState<{ isCorrect: boolean; message: string; nextStepId?: string } | null>(null);
-  const [totalXp, setTotalXp] = useState(0);
   const [missionXp, setMissionXp] = useState(0);
   const [showHint, setShowHint] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
+
+  // Load user progress from Firestore
+  useEffect(() => {
+    if (!user) return;
+
+    const progressRef = doc(db, 'users', user.uid, 'progress', 'data');
+    const unsubscribe = onSnapshot(progressRef, (doc) => {
+      if (doc.exists()) {
+        setUserProgress(doc.data() as UserProgress);
+      } else {
+        // Initialize progress if it doesn't exist
+        const initialProgress: UserProgress = {
+          uid: user.uid,
+          unlockedEras: ['Stone Age'],
+          completedMissions: [],
+          collectedArtifacts: [],
+          totalPoints: 0,
+          forecasts_generated: 0,
+          accuracy_score: 100,
+          timeline_events_tracked: 0,
+          active_simulations: 0
+        };
+        setDoc(progressRef, initialProgress);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [user]);
 
   const currentMission = selectedMission;
   const currentStep = currentMission?.steps.find(s => s.id === (currentStepId || currentMission.steps[0].id));
@@ -70,18 +98,39 @@ export const MissionMode: React.FC = () => {
     }
   };
 
-  const startMission = (mission: Mission) => {
+  const startMission = async (mission: Mission) => {
     setSelectedMission(mission);
     setCurrentStepId(mission.steps[0].id);
     setMissionXp(0);
     setHistory([]);
     setTaskFeedback(null);
+
+    if (user) {
+      const progressRef = doc(db, 'users', user.uid, 'progress', 'data');
+      await updateDoc(progressRef, {
+        active_simulations: increment(1)
+      });
+    }
   };
 
-  const finishMission = () => {
-    if (currentMission) {
-      setCompletedMissions(prev => [...prev, currentMission.id]);
-      setTotalXp(prev => prev + missionXp + currentMission.reward.xp);
+  const finishMission = async () => {
+    if (currentMission && user) {
+      const progressRef = doc(db, 'users', user.uid, 'progress', 'data');
+      
+      // Calculate new accuracy score (simplified: 100 if perfect, 80 if partial)
+      const isPerfect = currentStepId === 'complete-perfect' || currentStepId === 'v-complete-glory' || currentStepId === 's-complete';
+      const missionScore = isPerfect ? 100 : 80;
+      
+      const newAccuracy = userProgress 
+        ? (userProgress.accuracy_score * userProgress.completedMissions.length + missionScore) / (userProgress.completedMissions.length + 1)
+        : missionScore;
+
+      await updateDoc(progressRef, {
+        completedMissions: [...(userProgress?.completedMissions || []), currentMission.id],
+        totalPoints: increment(missionXp + currentMission.reward.xp),
+        accuracy_score: Math.round(newAccuracy)
+      });
+
       setSelectedMission(null);
       setCurrentStepId(null);
       setHistory([]);
@@ -112,7 +161,7 @@ export const MissionMode: React.FC = () => {
                   theme === 'futuristic' ? "bg-cyan-500/10 border-cyan-500/30 text-cyan-400" : "bg-amber-900/20 border-amber-900/30 text-amber-500"
                 )}>
                   <Zap size={16} />
-                  <span className="text-sm font-black tracking-widest">{totalXp} XP</span>
+                  <span className="text-sm font-black tracking-widest">{userProgress?.totalPoints || 0} XP</span>
                 </div>
               </div>
               <p className="text-lg opacity-60">Select a historical operation to begin your interactive training.</p>
@@ -139,7 +188,7 @@ export const MissionMode: React.FC = () => {
                       )}>
                         {mission.era}
                       </span>
-                      {completedMissions.includes(mission.id) && (
+                      {userProgress?.completedMissions.includes(mission.id) && (
                         <CheckCircle2 className="text-green-500" size={20} />
                       )}
                     </div>

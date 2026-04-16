@@ -148,3 +148,15 @@ export interface HistoryEvent {
     position: { x: number; y: number };
   }[];
 }
+
+export interface UserProgress {
+  uid: string;
+  unlockedEras: string[];
+  completedMissions: string[];
+  collectedArtifacts: string[];
+  totalPoints: number;
+  forecasts_generated: number;
+  accuracy_score: number;
+  timeline_events_tracked: number;
+  active_simulations: number;
+}

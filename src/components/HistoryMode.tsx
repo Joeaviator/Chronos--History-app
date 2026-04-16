@@ -6,14 +6,26 @@ import { HISTORY_EVENTS, ERAS } from '../constants';
 import { HistoryEvent, TimelinePeriod, Era } from '../types';
 import { Info, MapPin, X, Sparkles, ChevronLeft, ChevronRight, Clock, Rocket, MessageSquare, Sword, Home, History } from 'lucide-react';
 
+import { db, doc, updateDoc, increment } from '../firebase';
+
 export const HistoryMode: React.FC = () => {
-  const { theme, setMode } = useApp();
+  const { theme, setMode, user } = useApp();
   const [selectedEra, setSelectedEra] = useState<Era | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<HistoryEvent | null>(null);
   const [activeFact, setActiveFact] = useState<{ label: string; fact: string } | null>(null);
   const [randomFact, setRandomFact] = useState<string | null>(null);
   const [factIndex, setFactIndex] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Track event exploration
+  useEffect(() => {
+    if (selectedEvent && user) {
+      const progressRef = doc(db, 'users', user.uid, 'progress', 'data');
+      updateDoc(progressRef, {
+        timeline_events_tracked: increment(1)
+      }).catch(err => console.error("Error tracking event:", err));
+    }
+  }, [selectedEvent, user]);
 
   // Random Fact Pop-up System
   useEffect(() => {

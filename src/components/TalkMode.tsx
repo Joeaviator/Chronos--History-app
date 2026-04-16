@@ -9,8 +9,10 @@ import { Send, User, Bot, ArrowLeft, Sparkles, Brain, Shield, Heart, Zap } from 
 
 const CATEGORIES: FigureCategory[] = ['Leader', 'Scientist', 'Thinker', 'Explorer', 'Artist', 'Warrior'];
 
+import { db, doc, updateDoc, increment } from '../firebase';
+
 export const TalkMode: React.FC = () => {
-  const { theme } = useApp();
+  const { theme, user } = useApp();
   const [selectedCategory, setSelectedCategory] = useState<FigureCategory | 'All'>('All');
   const [activeFigureId, setActiveFigureId] = useState<string | null>(null);
   const [isSelectionOpen, setIsSelectionOpen] = useState(true);
@@ -60,6 +62,14 @@ export const TalkMode: React.FC = () => {
     };
     setMessages(prev => [...prev, newUserMessage]);
     setIsTyping(true);
+
+    // Track forecast generated
+    if (user) {
+      const progressRef = doc(db, 'users', user.uid, 'progress', 'data');
+      updateDoc(progressRef, {
+        forecasts_generated: increment(1)
+      }).catch(err => console.error("Error tracking forecast:", err));
+    }
 
     // Format history for Gemini
     const history = messages.map(msg => ({
