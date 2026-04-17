@@ -5,7 +5,7 @@ import { cn } from '../lib/utils';
 import { useApp } from './Layout';
 
 export const LandingPage: React.FC = () => {
-  const { login, theme, authError, setAuthError } = useApp();
+  const { login, theme, authError, setAuthError, isLoggingIn } = useApp();
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
@@ -111,14 +111,23 @@ export const LandingPage: React.FC = () => {
           </AnimatePresence>
           <button 
             onClick={login}
+            disabled={isLoggingIn}
             className={cn(
-              "px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all",
+              "px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all relative overflow-hidden",
               theme === 'futuristic' 
                 ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500 hover:text-black"
-                : "bg-amber-900/20 text-amber-500 border border-amber-800/30 hover:bg-amber-600 hover:text-white"
+                : "bg-amber-900/20 text-amber-500 border border-amber-800/30 hover:bg-amber-600 hover:text-white",
+              isLoggingIn && "opacity-50 cursor-wait"
             )}
           >
-            Sign In
+            {isLoggingIn ? (
+              <span className="flex items-center gap-2">
+                <Zap size={12} className="animate-spin" />
+                Connecting...
+              </span>
+            ) : (
+              "Sign In"
+            )}
           </button>
         </div>
       </nav>

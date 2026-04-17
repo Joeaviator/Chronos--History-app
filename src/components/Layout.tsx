@@ -14,6 +14,7 @@ interface AppContextType {
   setMode: (mode: AppMode) => void;
   user: User | null;
   loading: boolean;
+  isLoggingIn: boolean;
   login: () => Promise<void>;
   logout: () => Promise<void>;
   authError: string | null;
@@ -33,6 +34,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [mode, setMode] = useState<AppMode>('home');
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -77,20 +79,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const login = async () => {
     setAuthError(null);
+    setIsLoggingIn(true);
     try {
+      console.log("Starting Firebase login...");
       await signInWithPopup(auth, googleProvider);
+      console.log("Firebase login successful");
     } catch (error: any) {
       if (error.code === 'auth/popup-closed-by-user') {
         console.log("User closed the login popup.");
-        return;
-      }
-      if (error.code === 'auth/cancelled-popup-request') {
+      } else if (error.code === 'auth/cancelled-popup-request') {
         console.log("Login request was cancelled due to another popup being opened.");
-        return;
+      } else {
+        console.error("Login failed:", error);
+        setAuthError(error.message || "An unexpected error occurred during login.");
       }
-      
-      console.error("Login failed:", error);
-      setAuthError(error.message || "An unexpected error occurred during login.");
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -105,7 +109,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   return (
-    <AppContext.Provider value={{ theme, setTheme, mode, setMode, user, loading, login, logout, authError, setAuthError }}>
+    <AppContext.Provider value={{ theme, setTheme, mode, setMode, user, loading, isLoggingIn, login, logout, authError, setAuthError }}>
       {children}
     </AppContext.Provider>
   );
