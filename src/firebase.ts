@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, User } from 'firebase/auth';
 import { initializeFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, onSnapshot, getDocs, getDocFromServer, increment } from 'firebase/firestore';
 import firebaseConfigData from '../firebase-applet-config.json';
 
@@ -94,5 +94,5 @@ async function testConnection() {
 }
 testConnection();
 
-export { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, onSnapshot, getDocs, signInWithPopup, signOut, onAuthStateChanged, increment, firebaseConfig };
+export { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, onSnapshot, getDocs, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, increment, firebaseConfig };
 export type { User };

@@ -3,7 +3,7 @@ import { Theme, AppMode } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, Scroll, Clock, MessageSquare, Home, History, LogIn, LogOut, User as UserIcon, Target } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { auth, db, googleProvider, signInWithPopup, signOut, onAuthStateChanged, User, doc, getDoc, setDoc, OperationType, handleFirestoreError, firebaseConfig } from '../firebase';
+import { auth, db, googleProvider, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, User, doc, getDoc, setDoc, OperationType, handleFirestoreError, firebaseConfig } from '../firebase';
 import { serverTimestamp } from 'firebase/firestore';
 import { syncEcosystemUser } from '../services/ecosystemService';
 
@@ -42,6 +42,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [theme]);
 
   useEffect(() => {
+    // Handle redirect result
+    const checkRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          console.log("Redirect login successful");
+        }
+      } catch (error: any) {
+        console.error("Redirect login failed:", error);
+        setAuthError(error.message || "Redirect login failed.");
+      }
+    };
+    checkRedirect();
+
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
@@ -81,19 +95,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setAuthError(null);
     setIsLoggingIn(true);
     try {
-      console.log("Starting Firebase login...");
-      await signInWithPopup(auth, googleProvider);
-      console.log("Firebase login successful");
+      console.log("Starting Firebase redirect login...");
+      await signInWithRedirect(auth, googleProvider);
     } catch (error: any) {
-      if (error.code === 'auth/popup-closed-by-user') {
-        console.log("User closed the login popup.");
-      } else if (error.code === 'auth/cancelled-popup-request') {
-        console.log("Login request was cancelled due to another popup being opened.");
-      } else {
-        console.error("Login failed:", error);
-        setAuthError(error.message || "An unexpected error occurred during login.");
-      }
-    } finally {
+      console.error("Login redirect failed:", error);
+      setAuthError(error.message || "An unexpected error occurred during login.");
       setIsLoggingIn(false);
     }
   };
