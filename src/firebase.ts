@@ -14,21 +14,8 @@ const firebaseConfig = {
   firestoreDatabaseId: import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || (firebaseConfigData as any).firestoreDatabaseId
 };
 
-// Debug environment variable detection - This will show in the browser console
-console.log('Firebase Config Debug:', {
-  apiKeyDetected: !!import.meta.env.VITE_FIREBASE_API_KEY && !import.meta.env.VITE_FIREBASE_API_KEY.includes('REPLACE_WITH'),
-  apiKeyLength: import.meta.env.VITE_FIREBASE_API_KEY?.length || 0,
-  isPlaceholder: !!firebaseConfig.apiKey?.includes('REPLACE_WITH'),
-  isDevelopment: import.meta.env.DEV
-});
-
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-
-// Check if we are using placeholders
-if (firebaseConfig.apiKey?.includes('REPLACE_WITH')) {
-  console.warn('Firebase is using placeholder configuration. Please set your VITE_FIREBASE_* secrets in the AI Studio Settings panel.');
-}
 
 // Initialize Firestore with specific database ID and settings
 const databaseId = firebaseConfig.firestoreDatabaseId;
