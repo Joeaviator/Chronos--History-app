@@ -97,15 +97,23 @@ export const LandingPage: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
                 className={cn(
-                  "px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center gap-3",
+                  "p-4 rounded-xl text-[10px] font-bold uppercase tracking-widest flex flex-col gap-2 max-w-xs",
                   theme === 'futuristic' ? "bg-red-500/10 text-red-400 border border-red-500/30" : "bg-red-900/20 text-red-400 border border-red-800/30"
                 )}
               >
-                <Shield size={14} />
-                {authError}
-                <button onClick={() => setAuthError(null)} className="hover:text-white transition-colors">
-                  <Zap size={12} />
-                </button>
+                <div className="flex items-center gap-3">
+                  <Shield size={14} />
+                  <span>Auth Security Error</span>
+                  <button onClick={() => setAuthError(null)} className="ml-auto hover:text-white transition-colors">
+                    <Zap size={12} />
+                  </button>
+                </div>
+                <p className="normal-case opacity-80 font-mono text-[9px] leading-relaxed break-all">
+                  {authError}
+                </p>
+                <div className="pt-2 border-t border-red-500/20 text-[8px] opacity-60">
+                  Current Origin: {window.location.origin}
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
