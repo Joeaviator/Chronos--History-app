@@ -4,7 +4,8 @@ import path from 'path';
 import {defineConfig, loadEnv} from 'vite';
 
 export default defineConfig(({mode}) => {
-  const env = loadEnv(mode, '.', '');
+  // Load env from files AND from the system environment (the shell)
+  const env = { ...process.env, ...loadEnv(mode, '.', '') };
   
   // Helper to find variable with or without VITE_ prefix
   const getVar = (baseName: string) => env[`VITE_${baseName}`] || env[baseName] || '';
