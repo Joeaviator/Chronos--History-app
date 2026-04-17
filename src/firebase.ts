@@ -4,31 +4,21 @@ import { initializeFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collect
 import firebaseConfigData from '../firebase-applet-config.json';
 
 // Use environment variables if available, otherwise fallback to config file
-// We check for truthy values and ensure they aren't the placeholder strings
-const getEnvVar = (key: string, fallback: string) => {
-  const envValue = import.meta.env[key];
-  if (envValue && envValue !== '' && !envValue.includes('REPLACE_WITH')) {
-    return envValue;
-  }
-  return fallback;
-};
-
 const firebaseConfig = {
-  apiKey: getEnvVar('VITE_FIREBASE_API_KEY', firebaseConfigData.apiKey),
-  authDomain: getEnvVar('VITE_FIREBASE_AUTH_DOMAIN', firebaseConfigData.authDomain),
-  projectId: getEnvVar('VITE_FIREBASE_PROJECT_ID', firebaseConfigData.projectId),
-  storageBucket: getEnvVar('VITE_FIREBASE_STORAGE_BUCKET', firebaseConfigData.storageBucket),
-  messagingSenderId: getEnvVar('VITE_FIREBASE_MESSAGING_SENDER_ID', firebaseConfigData.messagingSenderId),
-  appId: getEnvVar('VITE_FIREBASE_APP_ID', firebaseConfigData.appId),
-  firestoreDatabaseId: getEnvVar('VITE_FIREBASE_FIRESTORE_DATABASE_ID', (firebaseConfigData as any).firestoreDatabaseId)
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || firebaseConfigData.apiKey,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || firebaseConfigData.authDomain,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || firebaseConfigData.projectId,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || firebaseConfigData.storageBucket,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseConfigData.messagingSenderId,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || firebaseConfigData.appId,
+  firestoreDatabaseId: import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || (firebaseConfigData as any).firestoreDatabaseId
 };
 
 // Debug environment variable detection - This will show in the browser console
 console.log('Firebase Config Debug:', {
-  source: 'bridged-env',
   apiKeyDetected: !!import.meta.env.VITE_FIREBASE_API_KEY && !import.meta.env.VITE_FIREBASE_API_KEY.includes('REPLACE_WITH'),
   apiKeyLength: import.meta.env.VITE_FIREBASE_API_KEY?.length || 0,
-  usingPlaceholder: !!firebaseConfig.apiKey?.includes('REPLACE_WITH'),
+  isPlaceholder: !!firebaseConfig.apiKey?.includes('REPLACE_WITH'),
   isDevelopment: import.meta.env.DEV
 });
 
